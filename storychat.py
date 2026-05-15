@@ -7,6 +7,7 @@ dynamic character switching and context management.
 
 from ollama_context import ContextEngine
 from typing import Dict, List, Optional, Any, Set
+import sys
 import logging
 import os
 import json
@@ -290,12 +291,15 @@ class StoryChat:
         
         elif cmd == '/createcharacter':
             try:
-                # Parse character data from command
-                char_data = self._parse_character_input(args)
+                if args:
+                    char_data = self._parse_character_input(args)
+                else:
+                    char_data = self._interactive_create_character()
                 self.create_character(char_data)
+            except ValueError as e:
+                self.console.print(f"[bold red]Error:[/bold red] {str(e)}")
             except Exception as e:
                 self.console.print(f"[bold red]Error:[/bold red] {str(e)}")
-                self.console.print("[bold yellow]Usage:[/bold yellow] /createcharacter name=Name role=Role personality=Personality ...")
         
         elif cmd == '/talkto':
             if not args:
@@ -329,10 +333,20 @@ class StoryChat:
             self._load_state(filename)
             
         elif cmd == '/groupchat':
-            if not args:
-                self.console.print("[bold yellow]Usage:[/bold yellow] /groupchat <character1> <character2> ...")
-                return
-            character_names = args.split()
+            if args:
+                character_names = args.split()
+            else:
+                self.console.print("[bold cyan]Group chat[/bold cyan] — enter character names one at a line. Type 'done' when finished.")
+                character_names = []
+                while True:
+                    name = input("Character> ")
+                    if name.strip().lower() == "done":
+                        break
+                    if name.strip():
+                        character_names.append(name.strip())
+                if not character_names:
+                    self.console.print("[bold yellow]No characters entered.[/bold yellow]")
+                    return
             self._start_group_chat(character_names)
         
         elif cmd == '/exit':
@@ -344,6 +358,32 @@ class StoryChat:
             self.console.print(f"[bold red]Unknown command:[/bold red] {cmd}")
             self._show_help()
     
+    def _interactive_create_character(self) -> Dict[str, str]:
+        """Interactively prompt for character details."""
+        self.console.print("[bold cyan]Creating a new character[/bold cyan] (press Ctrl+C to cancel)")
+
+        fields = [
+            ("name", "Character name"),
+            ("role", "Role (e.g. warrior, merchant)"),
+            ("personality", "Personality description"),
+            ("speech_style", "Speech style (e.g. formal, slangy)"),
+            ("appearance", "Appearance (optional, press Enter to skip)"),
+            ("background", "Background (optional, press Enter to skip)"),
+            ("goals", "Goals (optional, press Enter to skip)"),
+            ("secrets", "Secrets (optional, press Enter to skip)"),
+        ]
+
+        char_data = {}
+        for key, prompt in fields:
+            value = input(f"{prompt}> ")
+            if key in ("appearance", "background", "goals", "secrets") and not value:
+                value = "Not specified"
+            elif not value:
+                raise ValueError(f"{prompt} is required.")
+            char_data[key] = value
+
+        return char_data
+
     def _parse_character_input(self, input_str: str) -> Dict[str, str]:
         """Parse character creation input into a dictionary."""
         # For simplicity, we'll use a basic key=value parsing
@@ -400,13 +440,13 @@ class StoryChat:
         ## Available Commands
         
         * `/createbackground <description>` - Create story world background
-        * `/createcharacter name="Name" role="Role" ...` - Create a new character
+        * `/createcharacter` - Create a new character (interactive) or use `name=... role=...`
         * `/talkto <character>` - Switch active character
         * `/addcontext <description>` - Add new story context
         * `/characters` - List all characters
         * `/save [filename]` - Save session state (defaults to storychat_state.json)
-        * `/load [filename]` - Load session state (defaults to storychat_state.json)
-        * `/groupchat <character1> <character2> ...` - Start a conversation between characters
+        * `/load [filename]` - Save session state (defaults to storychat_state.json)
+        * `/groupchat` - Start a group conversation (interactive) or provide names inline
         * `/help` - Show this help message
         * `/exit` - Exit StoryChat
         
@@ -687,5 +727,9 @@ class StoryChat:
             raise
 
 if __name__ == "__main__":
-    chat = StoryChat()
-    chat.run()
+    try:
+        chat = StoryChat()
+        chat.run()
+    except RuntimeError as e:
+        print(f"Error: {e}")
+        sys.exit(1)

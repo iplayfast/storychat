@@ -1,0 +1,45 @@
+{
+  "characters": {
+    "Rolo": {
+      "template": "\n        Character Name: {name}\n        Role: {role}\n        Appearance: {appearance}\n        Personality: {personality}\n        Speech Style: {speech_style}\n        Background: {background}\n        Goals: {goals}\n        Secrets: {secrets}\n        ",
+      "variables": {
+        "name": "Rolo",
+        "role": "Blacksmith",
+        "personality": "quiet and moody",
+        "speech_style": "slow and deliberate",
+        "appearance": "large and dirty from work",
+        "background": "Not specified",
+        "goals": "Not specified",
+        "secrets": "Not specified"
+      }
+    },
+    "Betty": {
+      "template": "\n        Character Name: {name}\n        Role: {role}\n        Appearance: {appearance}\n        Personality: {personality}\n        Speech Style: {speech_style}\n        Background: {background}\n        Goals: {goals}\n        Secrets: {secrets}\n        ",
+      "variables": {
+        "name": "Betty",
+        "role": "village girl",
+        "personality": "cheerful",
+        "speech_style": "slangy",
+        "appearance": "pretty",
+        "background": "grew up in the village",
+        "goals": "to marry Rolo",
+        "secrets": "is in love with Rolo"
+      }
+    },
+    "Wilma": {
+      "template": "\n        Character Name: {name}\n        Role: {role}\n        Appearance: {appearance}\n        Personality: {personality}\n        Speech Style: {speech_style}\n        Background: {background}\n        Goals: {goals}\n        Secrets: {secrets}\n        ",
+      "variables": {
+        "name": "Wilma",
+        "role": "Betty's mother",
+        "personality": "strict",
+        "speech_style": "formal",
+        "appearance": "prime and proper",
+        "background": "Not specified",
+        "goals": "to have Betty marry a rich merchant",
+        "secrets": "Not specified"
+      }
+    }
+  },
+  "active_character": "Rolo",
+  "background_created": true
+}

@@ -1,6 +1,7 @@
 # ollama_context/engine.py
 import json
 import os
+import sys
 from typing import Any, Dict, List, Optional
 import ollama
 import chromadb
@@ -14,6 +15,28 @@ import re
 
 nest_asyncio.apply()
 logger = getLogger(__name__)
+
+def check_required_models(config: Optional[Dict[str, Any]] = None) -> None:
+    """Check that required Ollama models are available. Exits with a helpful message if not."""
+    if config is None:
+        config = load_config()
+    embedding_model = config.get("embedding_model", "nomic-embed-text:latest")
+    response_model = config.get("response_model", "llama3.2:latest")
+    required_models = [embedding_model, response_model]
+
+    try:
+        models_response = ollama.list()
+        available = {m.model for m in models_response.models}
+    except Exception as e:
+        print(f"Error: Could not reach Ollama — {e}")
+        print("Make sure Ollama is installed and running.")
+        sys.exit(1)
+
+    for model in required_models:
+        if model not in available:
+            print(f"Required model '{model}' not found.")
+            print(f"Please pull it by running:  ollama pull {model}")
+            sys.exit(1)
 
 def configure_logging(level: int = logging.INFO, enable_http_logs: bool = True):
     """Configure logging for the engine."""
@@ -131,7 +154,7 @@ class ContextEngineAsync:
         if mode in ["context", "combined", "auto"]:
             self.contexts = {}
             
-        self._validate_models()
+        check_required_models(self.config)
 
     def _initialize_config(self, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Initialize configuration with provided config or load defaults."""
@@ -445,18 +468,6 @@ class ContextEngineAsync:
             raise HTTPException(status_code=500, detail=f"Error during indexing: {str(e)}")
         
 
-    def _validate_models(self) -> None:
-        """Verify model availability."""
-        try:
-            models_response = ollama.list()
-            available_models = [model.model for model in models_response.models]
-            
-            for model_name in [self.embedding_model, self.response_model]:
-                if model_name not in available_models:
-                    logger.warning(f"Model '{model_name}' not found. Available: {available_models}")
-        except Exception as e:
-            logger.warning(f"Could not verify models: {e}")
-            
     
 class ContextEngine:
     """Synchronous wrapper for ContextEngineAsync."""    
